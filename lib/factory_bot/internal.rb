@@ -51,7 +51,9 @@ module FactoryBot
       end
 
       def sequence_by_name(name)
-        sequences.find(name)
+        load_definitions_until_found do
+          sequences.find(name)
+        end
       end
 
       def rewind_sequences
@@ -67,7 +69,9 @@ module FactoryBot
       end
 
       def factory_by_name(name)
-        factories.find(name)
+        load_definitions_until_found do
+          factories.find(name)
+        end
       end
 
       def register_strategy(strategy_name, strategy_class)
@@ -76,7 +80,9 @@ module FactoryBot
       end
 
       def strategy_by_name(name)
-        strategies.find(name)
+        load_definitions_until_found do
+          strategies.find(name)
+        end
       end
 
       def register_default_strategies
@@ -85,6 +91,16 @@ module FactoryBot
         register_strategy(:attributes_for, FactoryBot::Strategy::AttributesFor)
         register_strategy(:build_stubbed, FactoryBot::Strategy::Stub)
         register_strategy(:null, FactoryBot::Strategy::Null)
+      end
+
+      private
+
+      def load_definitions_until_found
+        loop do
+          return yield
+        rescue KeyError => e
+          FactoryBot.load_next_definition_file ? next : raise(e)
+        end
       end
     end
   end
